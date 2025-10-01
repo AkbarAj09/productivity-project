@@ -1,22 +1,22 @@
-import express from 'express';
-import bodyParser from 'body-parser';
+// Gunakan sintaks CommonJS 'require' secara konsisten
+const express = require('express');
+const path = require('path'); // Impor modul 'path' untuk menangani path direktori
 
 const app = express();
-const port = 3000;
-app.use(bodyParser.urlencoded({ extended: true }));
+// Vercel akan mengatur port, jadi kita siapkan fallback ke 3000 untuk lokal
+const port = process.env.PORT || 3000;
 
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  res.send(`Login attempted! Username: ${username}, Password: ${password}`);
-});
+app.use(express.urlencoded({ extended: true }));
 
+// ✅ Atur view engine dan lokasi folder 'views'
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Rute GET utama
 app.get('/', (req, res) => {
     const today = new Date();
-    const day = today.getDay(); // 0 = Sunday, 6 = Saturday
+    const day = today.getDay(); // 0 = Minggu, 6 = Sabtu
     let dataType, advice;
-
-    // Use req.headers to read a property from the request object
-    const userAgent = req.headers['user-agent'];
 
     if (day === 0 || day === 6) {
         dataType = 'a Weekend';
@@ -26,13 +26,21 @@ app.get('/', (req, res) => {
         advice = 'Stay productive!';
     }
 
-    res.render('../views/index.ejs', { dataType, advice, userAgent });
+    // Render file 'index.ejs' dari folder 'views' yang sudah diatur
+    // Kirim objek 'locals' agar template tidak error saat pertama kali dimuat
+    res.render('index', {
+        dataType,
+        advice,
+        locals: { numberOfLetters: null } // Kirim null atau nilai default
+    });
 });
 
+// Rute POST untuk menangani submit form
 app.post('/', (req, res) => {
-    const numLetters = req.body.name.length;
-
-    // Tambahkan kembali logika ini dari rute GET Anda
+    const name = req.body.name || ''; // Default ke string kosong jika tidak ada nama
+    const numLetters = name.length;
+    
+    // Kita butuh data 'dataType' dan 'advice' lagi di sini
     const today = new Date();
     const day = today.getDay();
     let dataType, advice;
@@ -44,15 +52,22 @@ app.post('/', (req, res) => {
         dataType = 'a Weekday';
         advice = 'Stay productive!';
     }
-
-    // Sekarang kirim semua data yang dibutuhkan oleh template
-    res.render('../views/index.ejs', {
-        dataType: dataType,
-        advice: advice,
-        numberOfLetters: numLetters 
+    
+    // Render ulang halaman dengan data hasil kalkulasi huruf
+    res.render('index', {
+        dataType,
+        advice,
+        locals: { numberOfLetters: numLetters }
     });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+
+// Bagian ini hanya untuk development lokal. Vercel tidak menggunakannya.
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port, () => {
+      console.log(`Server is running locally on port ${port}`);
+    });
+}
+  
+// ✅ Ekspor 'app' agar Vercel bisa menggunakannya
+module.exports = app;

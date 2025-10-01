@@ -1,0 +1,13 @@
+{
+  "name": "productivity-project",
+  "version": "1.0.0",
+  "description": "A simple productivity app with Express and EJS.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "ejs": "^3.1.9",
+    "express": "^4.18.2"
+  }
+}
